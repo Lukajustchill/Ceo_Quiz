@@ -712,7 +712,6 @@
           const side = s.value < 0 ? 'a' : 'b';
           const selClass = sel === s.value ? ` sel-${side}` : '';
           return `<button class="scale-btn${selClass}" onclick="pick(${s.value})">
-            <span class="scale-num">${idx + 1}</span>
             <span class="scale-label">${s.label}</span>
           </button>`;
         }).join('')}
