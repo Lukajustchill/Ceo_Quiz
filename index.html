@@ -14,8 +14,7 @@
       --gold: #f0b429;
       --gold-light: #ffd97d;
       --gold-dim: rgba(240,180,41,0.15);
-      --red: #e05252;
-      --blue: #4f9cf9;
+      --grey: #8c96a8;
       --text: #e8edf5;
       --text-muted: #6b7a96;
       --radius: 14px;
@@ -257,8 +256,8 @@
       gap: 12px;
       align-items: flex-start;
     }
-    .pole-a { border-color: rgba(224,82,82,0.35); }
-    .pole-b { border-color: rgba(79,156,249,0.35); }
+    .pole-a { border-color: rgba(140,150,168,0.35); }
+    .pole-b { border-color: rgba(140,150,168,0.35); }
     .pole-badge {
       font-size: 12px;
       font-weight: 800;
@@ -270,8 +269,8 @@
       align-items: center;
       justify-content: center;
     }
-    .pole-a .pole-badge { color: var(--red);  background: rgba(224,82,82,0.18); }
-    .pole-b .pole-badge { color: var(--blue); background: rgba(79,156,249,0.18); }
+    .pole-a .pole-badge { color: var(--grey); background: rgba(140,150,168,0.18); }
+    .pole-b .pole-badge { color: var(--grey); background: rgba(140,150,168,0.18); }
     .pole-text {
       font-size: 13.5px;
       line-height: 1.55;
@@ -318,17 +317,17 @@
       transition: color 0.15s;
     }
     .scale-btn.sel-a {
-      border-color: var(--red);
-      background: rgba(224,82,82,0.07);
+      border-color: var(--grey);
+      background: rgba(140,150,168,0.07);
     }
     .scale-btn.sel-a .scale-num,
-    .scale-btn.sel-a .scale-label { color: var(--red); }
+    .scale-btn.sel-a .scale-label { color: var(--grey); }
     .scale-btn.sel-b {
-      border-color: var(--blue);
-      background: rgba(79,156,249,0.07);
+      border-color: var(--grey);
+      background: rgba(140,150,168,0.07);
     }
     .scale-btn.sel-b .scale-num,
-    .scale-btn.sel-b .scale-label { color: var(--blue); }
+    .scale-btn.sel-b .scale-label { color: var(--grey); }
 
     .quiz-footer {
       display: flex;
@@ -455,6 +454,27 @@
       margin-bottom: 18px;
       opacity: 0.7;
     }
+
+    .dotmap-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .dotmap-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    #dot-map {
+      width: 100%;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -537,6 +557,11 @@
     <div class="scores-card">
       <div class="scores-title">Axis Scores &nbsp;(−9 to +9)</div>
       <div id="axes-output"></div>
+    </div>
+
+    <div class="dotmap-card">
+      <div class="dotmap-title">Axis Map</div>
+      <svg id="dot-map" viewBox="0 0 520 310" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <div class="results-footer">
@@ -721,6 +746,111 @@
     }
   }
 
+  function buildDotMap(scores) {
+    const ap = scores[0], rt = scores[1], sa = scores[2], sp = scores[3];
+
+    const gX = 70, gY = 42, gW = 380, gH = 226;
+    const cx = gX + gW / 2;
+    const cy = gY + gH / 2;
+
+    const px = s => cx + (s / 9) * (gW / 2);
+    const py = s => cy - (s / 9) * (gH / 2);
+
+    const ns = 'http://www.w3.org/2000/svg';
+    function el(tag, attrs, txt) {
+      const e = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+      if (txt !== undefined) e.textContent = txt;
+      return e;
+    }
+
+    const svg = document.getElementById('dot-map');
+    svg.innerHTML = '';
+
+    // Grid background
+    svg.appendChild(el('rect', { x: gX, y: gY, width: gW, height: gH, fill: '#0d1525' }));
+
+    // Grid lines (18 divisions = one per score unit)
+    for (let i = 0; i <= 18; i++) {
+      svg.appendChild(el('line', {
+        x1: gX + i * gW / 18, y1: gY, x2: gX + i * gW / 18, y2: gY + gH,
+        stroke: '#1e2d47', 'stroke-width': 0.5
+      }));
+      svg.appendChild(el('line', {
+        x1: gX, y1: gY + i * gH / 18, x2: gX + gW, y2: gY + i * gH / 18,
+        stroke: '#1e2d47', 'stroke-width': 0.5
+      }));
+    }
+
+    // Diagonal reference lines
+    // Spontaneity (\): Managed top-left → Adaptive bottom-right
+    svg.appendChild(el('line', {
+      x1: gX, y1: gY, x2: gX + gW, y2: gY + gH,
+      stroke: '#22c55e', 'stroke-width': 1.5, 'stroke-dasharray': '5 7', opacity: 0.6
+    }));
+    // Social Aptitude (/): Introvert bottom-left → Extrovert top-right
+    svg.appendChild(el('line', {
+      x1: gX, y1: gY + gH, x2: gX + gW, y2: gY,
+      stroke: '#a855f7', 'stroke-width': 1.5, 'stroke-dasharray': '5 7', opacity: 0.6
+    }));
+
+    // Main axis lines
+    svg.appendChild(el('line', { x1: gX, y1: cy, x2: gX + gW, y2: cy, stroke: '#e07a22', 'stroke-width': 1.8 }));
+    svg.appendChild(el('line', { x1: cx, y1: gY, x2: cx, y2: gY + gH, stroke: '#4a90d9', 'stroke-width': 1.8 }));
+
+    // Label helper
+    function lbl(x, y, txt, color, anchor, size, rotate) {
+      const t = el('text', {
+        x, y,
+        fill: color,
+        'font-size': size || 8.5,
+        'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        'font-weight': '700',
+        'letter-spacing': '0.08em',
+        'text-anchor': anchor || 'middle',
+      }, txt);
+      if (rotate) t.setAttribute('transform', `rotate(${rotate}, ${x}, ${y})`);
+      svg.appendChild(t);
+    }
+
+    // Axis pole labels (inside grid edges)
+    lbl(cx, gY + 13,       'SYSTEMS',    '#4a90d9');
+    lbl(cx, gY + gH - 7,   'PEOPLE',     '#4a90d9');
+    lbl(gX + 8,  cy - 6,   'DEFENDER',   '#e07a22', 'start');
+    lbl(gX + gW - 8, cy - 6, 'RISK TAKER', '#e07a22', 'end');
+
+    // Corner labels (outside grid corners)
+    lbl(gX + 3,      gY - 5,       'MANAGED',   '#22c55e', 'start', 7.5);
+    lbl(gX + gW - 3, gY - 5,       'EXTROVERT', '#a855f7', 'end',   7.5);
+    lbl(gX + 3,      gY + gH + 12, 'INTROVERT', '#a855f7', 'start', 7.5);
+    lbl(gX + gW - 3, gY + gH + 12, 'ADAPTIVE',  '#22c55e', 'end',   7.5);
+
+    // Diagonal axis name labels (rotated)
+    const diagAngle = Math.atan2(gH, gW) * (180 / Math.PI); // ≈ 31°
+    lbl(cx + 85, cy - 52, 'SOCIAL APTITUDE', '#a855f7', 'middle', 7.5, -diagAngle);
+    lbl(cx + 85, cy + 57, 'SPONTANEITY',     '#22c55e', 'middle', 7.5,  diagAngle);
+
+    // Dots — one per axis, plotted on its line
+    // Risk Tolerance: on horizontal axis at y=cy
+    // Approach:       on vertical axis at x=cx
+    // Social Aptitude (/ diagonal): at (px(sa), py(sa))
+    // Spontaneity (\ diagonal):     at (px(sp), py(-sp))
+    const dots = [
+      { x: px(rt), y: cy,        color: '#e07a22' },
+      { x: cx,     y: py(ap),    color: '#4a90d9' },
+      { x: px(sa), y: py(sa),    color: '#a855f7' },
+      { x: px(sp), y: py(-sp),   color: '#22c55e' },
+    ];
+
+    dots.forEach(d => {
+      const dx = Math.max(gX, Math.min(gX + gW, d.x));
+      const dy = Math.max(gY, Math.min(gY + gH, d.y));
+      svg.appendChild(el('circle', { cx: dx, cy: dy, r: 13, fill: d.color, opacity: 0.18 }));
+      svg.appendChild(el('circle', { cx: dx, cy: dy, r: 8,  fill: d.color }));
+      svg.appendChild(el('circle', { cx: dx - 2, cy: dy - 2.5, r: 2, fill: 'rgba(255,255,255,0.38)' }));
+    });
+  }
+
   function showResults() {
     const scores = [0, 0, 0, 0];
     QUESTIONS.forEach((q, i) => {
@@ -754,6 +884,7 @@
     }).join('');
 
     showScreen('screen-results');
+    buildDotMap(scores);
   }
 
   function retake() {
