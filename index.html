@@ -746,6 +746,67 @@
     }
   }
 
+  function computeResultSquare(scores) {
+    // Grid position of each axis as a 2D point on the map
+    // [0]=Approach, [1]=Risk Tolerance, [2]=Social Aptitude, [3]=Spontaneity
+    const pos = [
+      { x: 0,          y: scores[0]  },  // Approach: vertical axis
+      { x: scores[1],  y: 0          },  // Risk Tolerance: horizontal axis
+      { x: scores[2],  y: scores[2]  },  // Social Aptitude: / diagonal → dist = |sa|×√2
+      { x: scores[3],  y: -scores[3] },  // Spontaneity: \ diagonal   → dist = |sp|×√2
+    ];
+
+    // Euclidean distance from centre for each axis dot.
+    // Diagonal axes naturally score higher than straight axes at the same raw score
+    // because their positions are (s,s) and (s,-s) rather than (s,0) or (0,s).
+    const dist = pos.map(p => Math.sqrt(p.x * p.x + p.y * p.y));
+
+    // Rule 1: at least 2 raw axis scores must have |score| >= 3
+    const countOver3 = scores.filter(s => Math.abs(s) >= 3).length;
+    // Rule 2: all four distances equal → no dominant trait
+    const allTied = dist.every(d => Math.abs(d - dist[0]) < 0.001);
+
+    function nearCentre(mx, my) {
+      const sign = () => Math.random() < 0.5 ? 1 : -1;
+      const x = (mx !== undefined) ? mx : sign() * (Math.floor(Math.random() * 2) + 1);
+      const y = (my !== undefined) ? my : sign() * (Math.floor(Math.random() * 2) + 1);
+      return { x: x || sign(), y: y || sign(), neutral: true };
+    }
+
+    if (allTied || countOver3 < 2) return nearCentre();
+
+    // Rules 3 & 4: rank by distance from centre — furthest = most dominant
+    const ranked = dist.map((d, i) => ({ d, i })).sort((a, b) => b.d - a.d);
+    const topDist = ranked[0].d;
+    const tiedTop = ranked.filter(r => Math.abs(r.d - topDist) < 0.001);
+
+    let iA, iB;
+    if (tiedTop.length >= 3) {
+      const shuffled = [...tiedTop].sort(() => Math.random() - 0.5);
+      iA = shuffled[0].i; iB = shuffled[1].i;
+    } else if (tiedTop.length === 2) {
+      iA = tiedTop[0].i; iB = tiedTop[1].i;
+    } else {
+      iA = ranked[0].i;
+      const secondDist = ranked[1].d;
+      const tiedSecond = ranked.slice(1).filter(r => Math.abs(r.d - secondDist) < 0.001);
+      iB = tiedSecond[Math.floor(Math.random() * tiedSecond.length)].i;
+    }
+
+    // Rule 5: midpoint between the two dominant axis positions
+    let mx = Math.round((pos[iA].x + pos[iB].x) / 2);
+    let my = Math.round((pos[iA].y + pos[iB].y) / 2);
+
+    // Zero-score fallback: square cannot sit on a neutral axis line
+    if (mx === 0) mx = Math.random() < 0.5 ? 1 : -1;
+    if (my === 0) my = Math.random() < 0.5 ? 1 : -1;
+
+    // Rule 6: midpoint too central → neutral (preserve computed position)
+    if (Math.abs(mx) <= 2 && Math.abs(my) <= 2) return nearCentre(mx, my);
+
+    return { x: mx, y: my, neutral: false };
+  }
+
   function buildDotMap(scores) {
     const ap = scores[0], rt = scores[1], sa = scores[2], sp = scores[3];
 
@@ -849,6 +910,20 @@
       svg.appendChild(el('circle', { cx: dx, cy: dy, r: 8,  fill: d.color }));
       svg.appendChild(el('circle', { cx: dx - 2, cy: dy - 2.5, r: 2, fill: 'rgba(255,255,255,0.38)' }));
     });
+
+    // ─── Yellow result square ───
+    // Fills exactly one grid cell. Grid lines sit at integer scores (-9…+9).
+    // For positive x the cell spans from grid line (x-1) to (x); for negative, (x) to (x+1).
+    // SVG y is inverted: for positive y (Systems) the cell spans py(y) to py(y-1).
+    const result = computeResultSquare(scores);
+    const cellW = gW / 18;
+    const cellH = gH / 18;
+    const sqX = result.x > 0 ? px(result.x - 1) : px(result.x);
+    const sqY = result.y > 0 ? py(result.y)      : py(result.y + 1);
+    // Glow
+    svg.appendChild(el('rect', { x: sqX - 3, y: sqY - 3, width: cellW + 6, height: cellH + 6, fill: '#ffd700', opacity: 0.2, rx: 2 }));
+    // Square — fills the cell exactly
+    svg.appendChild(el('rect', { x: sqX, y: sqY, width: cellW, height: cellH, fill: '#ffd700' }));
   }
 
   function showResults() {
