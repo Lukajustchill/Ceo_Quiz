@@ -364,6 +364,98 @@
       color: var(--text-muted);
       letter-spacing: 0.03em;
     }
+    .ceo-type-label {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .ceo-type-name {
+      font-size: clamp(32px, 8vw, 52px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      background: linear-gradient(140deg, var(--gold), var(--gold-light) 60%, #fff6d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .profile-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-bottom: 12px;
+    }
+    .profile-card-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .trait-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .trait-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 11px;
+      border-radius: 20px;
+      background: var(--gold-dim);
+      color: var(--gold);
+      border: 1px solid rgba(240,180,41,0.22);
+    }
+    .dog-breed-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .ceo-name-list {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.75;
+    }
+    .daycare-text {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .plays-with-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--card-border);
+    }
+    .plays-with-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .plays-with-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold);
+    }
 
     .scores-card {
       background: var(--card);
@@ -552,6 +644,33 @@
   <div class="screen" id="screen-results">
     <div class="results-top">
       <div class="results-eyebrow"><span class="label">Your Results</span></div>
+      <div class="ceo-type-label">You are</div>
+      <div class="ceo-type-name" id="ceo-type-name"></div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-card" style="margin-bottom:0">
+        <div class="profile-card-title">Traits</div>
+        <div class="trait-list" id="trait-list"></div>
+      </div>
+      <div class="profile-card" style="margin-bottom:0">
+        <div class="profile-card-title">Your Dog Breed</div>
+        <div class="dog-breed-value" id="dog-breed-value"></div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-title">CEOs Like You</div>
+      <div class="ceo-name-list" id="ceo-name-list"></div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-title">Doggy Daycare</div>
+      <div class="daycare-text" id="daycare-text"></div>
+      <div class="plays-with-row">
+        <span class="plays-with-label">Plays well with</span>
+        <span class="plays-with-value" id="plays-with-value"></span>
+      </div>
     </div>
 
     <div class="scores-card">
@@ -572,6 +691,72 @@
 
 </div>
 <script>
+  const CEO_PROFILES = {
+    'The Optimizer': {
+      traits: ['Analytical', 'Efficient', 'Measured'],
+      dog: 'Doberman Pinscher',
+      ceos: ['Michael Dell', 'Jeff Bezos', 'Bill Gates'],
+      playsWith: 'German Shepherd (The Operator)',
+      daycare: "You thrive in a structured training yard with clear objectives — agility drills, timed circuits, measurable outcomes. Chaos gets reorganized fast. You do best alongside a German Shepherd who matches your discipline and keeps the session on track.",
+    },
+    'The Overseer': {
+      traits: ['Controlling', 'Defensive', 'Deliberate'],
+      dog: 'Rottweiler',
+      ceos: ['Jamie Dimon', 'Sam Walton', 'Carlos Ghosn'],
+      playsWith: 'Akita (The Anchor)',
+      daycare: "You prefer a secure, bounded yard with a clear hierarchy and minimal surprises. An Akita is your ideal play partner — steady, loyal, and not prone to reckless behavior. You're not the life of the party, but the other dogs always know exactly where the boundaries are.",
+    },
+    'The Operator': {
+      traits: ['Mechanical', 'Decisive', 'Rigorous'],
+      dog: 'German Shepherd',
+      ceos: ['Bob Iger', 'Tim Cook', 'Jensen Huang', 'Jack Dorsey'],
+      playsWith: 'Doberman Pinscher (The Optimizer)',
+      daycare: "You excel in a purpose-driven environment — obstacle courses, search-and-retrieve, anything with a defined goal. A Doberman Pinscher keeps pace with your precision and won't disrupt your focus. You're at your best when the activity has a point.",
+    },
+    'The Blitzscaler': {
+      traits: ['Fast', 'Aggressive', 'Risk Tolerant'],
+      dog: 'American Pit Bull Terrier',
+      ceos: ['Elon Musk', 'Travis Kalanick', 'Brian Chesky', 'Jack Welch', 'Mark Zuckerberg'],
+      playsWith: 'Golden Retriever (The Crusader)',
+      daycare: "Give you an open field and a starting pistol. You thrive in fast, high-energy sessions where the rules are loose and intensity is high. A Golden Retriever can keep up with your drive and match your enthusiasm — even if they're more focused on making friends along the way.",
+    },
+    'The Harmonizer': {
+      traits: ['Adaptable', 'Steady', 'Pragmatic'],
+      dog: 'Goldendoodle',
+      ceos: ['Andy Jassy', 'John Donahoe', 'Satya Nadella'],
+      playsWith: 'Almost any breed',
+      daycare: "You're the dog every daycare wishes they had more of. You adapt to whatever the group needs — structured or chaotic, big or small. You drift toward the edges of conflict to smooth things out before they escalate, and somehow every dog leaves liking you.",
+    },
+    'The Anchor': {
+      traits: ['Measured', 'Disciplined', 'Risk-Averse'],
+      dog: 'Akita',
+      ceos: ['Warren Buffett', 'Brian Moynihan', 'Larry Fink'],
+      playsWith: 'Rottweiler (The Overseer)',
+      daycare: "You're selective about your environment and your company. A calm, well-managed yard with familiar dogs suits you far better than a noisy free-for-all. A Rottweiler earns your respect — methodical, serious, and not interested in wasting energy on nonsense.",
+    },
+    'The Custodian': {
+      traits: ['Fair', 'Protective', 'Inclusive'],
+      dog: 'Saint Bernard',
+      ceos: ['Paul Polman', 'Emmanuel Farber', 'Marc Benioff'],
+      playsWith: 'Cavalier King Charles Spaniel (The Culture Creator)',
+      daycare: "You're happiest in an inclusive, relaxed setting where every dog feels welcome. You naturally keep an eye on the smaller or shyer dogs in the group. A Cavalier King Charles Spaniel is your natural companion — gentle, social, and always happy to just enjoy the moment together.",
+    },
+    'The Crusader': {
+      traits: ['Charismatic', 'Persuasive'],
+      dog: 'Golden Retriever',
+      ceos: ['Steve Jobs', 'Richard Branson', 'Howard Schultz'],
+      playsWith: 'American Pit Bull Terrier (The Blitzscaler)',
+      daycare: "You light up any yard you walk into. High-energy social play is your element, and you're at your best rallying the group around a shared game. An American Pit Bull Terrier matches your intensity and drive — even if you're the one making sure everyone's having a good time.",
+    },
+    'The Culture Creator': {
+      traits: ['Approachable', 'Supportive', 'People-Driven'],
+      dog: 'Cavalier King Charles Spaniel',
+      ceos: ['Ed Bastian', 'Tony Hsieh', 'Herb Kelleher'],
+      playsWith: 'Saint Bernard (The Custodian)',
+      daycare: "You're built for connection, not competition. A cozy, social daycare where dogs mingle and build bonds is exactly your speed. A Saint Bernard is your perfect companion — steady, warm, and just as focused on everyone feeling included as you are.",
+    },
+  };
+
   const AXES = [
     { name: 'Approach',        negLabel: 'People',    posLabel: 'Systems'    },
     { name: 'Risk Tolerance',  negLabel: 'Defender',  posLabel: 'Risk Taker' },
@@ -745,6 +930,36 @@
     }
   }
 
+  function getCeoType(x, y) {
+    if (Math.abs(x) <= 2 && Math.abs(y) <= 2) return 'The Harmonizer';
+
+    if (x < 0 && y > 0) {
+      // Top-left: Defender + Systems, divided by \ diagonal (y = -x)
+      if (y > -x) return 'The Optimizer';
+      if (y < -x) return 'The Overseer';
+      return Math.random() < 0.5 ? 'The Optimizer' : 'The Overseer';
+    }
+    if (x > 0 && y > 0) {
+      // Top-right: Risk Taker + Systems, divided by / diagonal (y = x)
+      if (y > x) return 'The Operator';
+      if (y < x) return 'The Blitzscaler';
+      return Math.random() < 0.5 ? 'The Operator' : 'The Blitzscaler';
+    }
+    if (x < 0 && y < 0) {
+      // Bottom-left: Defender + People, divided by / diagonal (|y| vs |x|)
+      if (Math.abs(y) < Math.abs(x)) return 'The Anchor';
+      if (Math.abs(y) > Math.abs(x)) return 'The Custodian';
+      return Math.random() < 0.5 ? 'The Anchor' : 'The Custodian';
+    }
+    if (x > 0 && y < 0) {
+      // Bottom-right: Risk Taker + People, divided by \ diagonal (|y| vs x)
+      if (Math.abs(y) < x) return 'The Crusader';
+      if (Math.abs(y) > x) return 'The Culture Creator';
+      return Math.random() < 0.5 ? 'The Crusader' : 'The Culture Creator';
+    }
+    return 'The Harmonizer';
+  }
+
   function computeResultSquare(scores) {
     // Grid position of each axis as a 2D point on the map
     // [0]=Approach, [1]=Risk Tolerance, [2]=Social Aptitude, [3]=Spontaneity
@@ -806,7 +1021,7 @@
     return { x: mx, y: my, neutral: false };
   }
 
-  function buildDotMap(scores) {
+  function buildDotMap(scores, result) {
     const ap = scores[0], rt = scores[1], sa = scores[2], sp = scores[3];
 
     const gX = 70, gY = 42, gW = 380, gH = 226;
@@ -914,7 +1129,6 @@
     // Fills exactly one grid cell. Grid lines sit at integer scores (-9…+9).
     // For positive x the cell spans from grid line (x-1) to (x); for negative, (x) to (x+1).
     // SVG y is inverted: for positive y (Systems) the cell spans py(y) to py(y-1).
-    const result = computeResultSquare(scores);
     const cellW = gW / 18;
     const cellH = gH / 18;
     const sqX = result.x > 0 ? px(result.x - 1) : px(result.x);
@@ -930,6 +1144,17 @@
     QUESTIONS.forEach((q, i) => {
       scores[q.axis] += answers[i];
     });
+
+    const result = computeResultSquare(scores);
+    const ceoType = getCeoType(result.x, result.y);
+    document.getElementById('ceo-type-name').textContent = ceoType;
+
+    const profile = CEO_PROFILES[ceoType];
+    document.getElementById('trait-list').innerHTML = profile.traits.map(t => `<span class="trait-badge">${t}</span>`).join('');
+    document.getElementById('dog-breed-value').textContent = profile.dog;
+    document.getElementById('ceo-name-list').textContent = profile.ceos.join(', ');
+    document.getElementById('daycare-text').textContent = profile.daycare;
+    document.getElementById('plays-with-value').textContent = profile.playsWith;
 
     document.getElementById('axes-output').innerHTML = scores.map((score, i) => {
       const ax = AXES[i];
@@ -958,7 +1183,7 @@
     }).join('');
 
     showScreen('screen-results');
-    buildDotMap(scores);
+    buildDotMap(scores, result);
   }
 
   function retake() {
