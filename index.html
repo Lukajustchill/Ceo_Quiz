@@ -885,6 +885,30 @@
 
 </div>
 <script>
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxjCOjg4Oc7B19d5eZ2mHDjmw3WguOVIDfBfTGoJ9iOsuKemXhVSpjYhXp1IYCHkJlmNA/exec';
+
+  function submitData(scores, ceoType) {
+    const politicMap = {
+      'Very Liberal': 1, 'Mostly Liberal': 2, 'Slightly Liberal': 3,
+      'Slightly Conservative': 4, 'Mostly Conservative': 5, 'Very Conservative': 6,
+    };
+    const payload = JSON.stringify({
+      path:       pathVariant,
+      ceoType:    ceoType,
+      answers:    answers,
+      scores:     scores,
+      gender:     demoGender,
+      age:        demoAge,
+      politicNum: politicMap[demoPolitic] || null,
+    });
+    fetch(SHEETS_URL, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    payload,
+    }).catch(() => {});
+  }
+
   const CEO_PROFILES = {
     'The Optimizer': {
       traits: ['Analytical', 'Efficient', 'Measured'],
@@ -1428,6 +1452,7 @@
 
     const result = computeResultSquare(scores);
     const ceoType = getCeoType(result.x, result.y);
+    submitData(scores, ceoType);
     document.getElementById('ceo-type-name').textContent = ceoType;
 
     const profile = CEO_PROFILES[ceoType];
